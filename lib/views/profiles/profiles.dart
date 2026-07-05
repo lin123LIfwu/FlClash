@@ -234,7 +234,11 @@ class ProfileItem extends StatelessWidget {
       context,
       builder: (_) {
         return AdaptiveSheetScaffold(
-          body: EditProfileView(profile: profile, context: context),
+          body: EditProfileView(
+            profile: profile,
+            context: context,
+            displayTitle: displayTitle,
+          ),
           title: context.appLocalizations.edit,
         );
       },

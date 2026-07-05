@@ -1,3 +1,4 @@
+import 'package:fl_clash/views/profiles/edit.dart';
 import 'package:fl_clash/views/profiles/profiles.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -13,6 +14,32 @@ void main() {
 
       expect(getProfileDisplayTimestamp(dateTime), '2026-07-05 22:18:36');
       expect(getProfileDisplayTimestamp(null), '');
+    });
+  });
+
+  group('profile edit label helpers', () {
+    test('keeps provider label hidden behind display title', () {
+      expect(getEditProfileDisplayLabel('魔戒.net', '1'), '1');
+      expect(getEditProfileDisplayLabel('魔戒.net', null), '魔戒.net');
+    });
+
+    test('preserves original label when display title is unchanged', () {
+      expect(
+        getEditProfileLabelForSave(
+          inputLabel: '1',
+          originalLabel: '魔戒.net',
+          displayLabel: '1',
+        ),
+        '魔戒.net',
+      );
+      expect(
+        getEditProfileLabelForSave(
+          inputLabel: '自定义',
+          originalLabel: '魔戒.net',
+          displayLabel: '1',
+        ),
+        '自定义',
+      );
     });
   });
 }

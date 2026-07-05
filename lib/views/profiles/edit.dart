@@ -12,14 +12,31 @@ import 'package:fl_clash/state.dart';
 import 'package:fl_clash/widgets/widgets.dart';
 import 'package:flutter/material.dart';
 
+String getEditProfileDisplayLabel(String originalLabel, String? displayTitle) {
+  return displayTitle ?? originalLabel;
+}
+
+String getEditProfileLabelForSave({
+  required String inputLabel,
+  required String originalLabel,
+  required String? displayLabel,
+}) {
+  if (displayLabel != null && inputLabel == displayLabel) {
+    return originalLabel;
+  }
+  return inputLabel;
+}
+
 class EditProfileView extends StatefulWidget {
   final Profile profile;
   final BuildContext context;
+  final String? displayTitle;
 
   const EditProfileView({
     super.key,
     required this.context,
     required this.profile,
+    this.displayTitle,
   });
 
   @override
@@ -39,7 +56,12 @@ class _EditProfileViewState extends State<EditProfileView> {
   @override
   void initState() {
     super.initState();
-    _labelController = TextEditingController(text: widget.profile.label);
+    _labelController = TextEditingController(
+      text: getEditProfileDisplayLabel(
+        widget.profile.label,
+        widget.displayTitle,
+      ),
+    );
     _urlController = TextEditingController(text: widget.profile.url);
     _autoUpdate = widget.profile.autoUpdate;
     _autoUpdateDurationController = TextEditingController(
@@ -63,9 +85,14 @@ class _EditProfileViewState extends State<EditProfileView> {
 
   Future<void> _handleConfirm() async {
     if (!_formKey.currentState!.validate()) return;
+    final label = getEditProfileLabelForSave(
+      inputLabel: _labelController.text,
+      originalLabel: widget.profile.label,
+      displayLabel: widget.displayTitle,
+    );
     var profile = widget.profile.copyWith(
       url: _urlController.text,
-      label: _labelController.text,
+      label: label,
       autoUpdate: _autoUpdate,
       autoUpdateDuration: Duration(
         minutes: int.parse(_autoUpdateDurationController.text),
@@ -137,9 +164,10 @@ class _EditProfileViewState extends State<EditProfileView> {
       }
     }
     if (!mounted) return;
-    final title = widget.profile.label.takeFirstValid([
-      widget.profile.id.toString(),
-    ]);
+    final title = getEditProfileDisplayLabel(
+      widget.profile.label.takeFirstValid([widget.profile.id.toString()]),
+      widget.displayTitle,
+    );
     final editorPage = EditorPage(
       title: title,
       content: _rawText!,
