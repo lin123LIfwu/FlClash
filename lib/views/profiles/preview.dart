@@ -7,13 +7,9 @@ import 'package:flutter/material.dart';
 
 class PreviewProfileView extends StatefulWidget {
   final Profile profile;
-  final String title;
+  final String? title;
 
-  const PreviewProfileView({
-    super.key,
-    required this.profile,
-    required this.title,
-  });
+  const PreviewProfileView({super.key, required this.profile, this.title});
 
   @override
   State<PreviewProfileView> createState() => _PreviewProfileViewState();
@@ -50,7 +46,7 @@ class _PreviewProfileViewState extends State<PreviewProfileView> {
       builder: (_, content, _) {
         return EditorPage(
           key: const Key('content'),
-          title: widget.title,
+          title: widget.title ?? widget.profile.id.toString(),
           content: content,
         );
       },
