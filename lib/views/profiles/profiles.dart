@@ -13,6 +13,14 @@ import 'add.dart';
 import 'edit.dart';
 import 'preview.dart';
 
+String getProfileDisplayTitle(int index) {
+  return '${index + 1}';
+}
+
+String getProfileDisplayTimestamp(DateTime? lastUpdateDate) {
+  return lastUpdateDate?.showFull ?? '';
+}
+
 class ProfilesView extends StatefulWidget {
   const ProfilesView({super.key});
 
@@ -62,7 +70,8 @@ class _ProfilesViewState extends State<ProfilesView> {
     }
     _isUpdating = true;
     final List<UpdatingMessage> messages = [];
-    final updateProfiles = profiles.map<Future>((profile) async {
+    final updateProfiles = profiles.asMap().entries.map<Future>((entry) async {
+      final profile = entry.value;
       if (profile.type == ProfileType.file) return;
       try {
         await globalState.container
@@ -70,7 +79,10 @@ class _ProfilesViewState extends State<ProfilesView> {
             .updateProfile(profile, showLoading: true);
       } catch (e) {
         messages.add(
-          UpdatingMessage(label: profile.realLabel, message: e.toString()),
+          UpdatingMessage(
+            label: getProfileDisplayTitle(entry.key),
+            message: e.toString(),
+          ),
         );
       }
     });
@@ -151,6 +163,7 @@ class _ProfilesViewState extends State<ProfilesView> {
                           GridItem(
                             child: ProfileItem(
                               profile: state.profiles[i],
+                              displayTitle: getProfileDisplayTitle(i),
                               groupValue: state.currentProfileId,
                               onChanged: (profileId) {
                                 ref
@@ -172,12 +185,14 @@ class _ProfilesViewState extends State<ProfilesView> {
 
 class ProfileItem extends StatelessWidget {
   final Profile profile;
+  final String displayTitle;
   final int? groupValue;
   final void Function(int? value) onChanged;
 
   const ProfileItem({
     super.key,
     required this.profile,
+    required this.displayTitle,
     required this.groupValue,
     required this.onChanged,
   });
@@ -199,7 +214,10 @@ class ProfileItem extends StatelessWidget {
   }
 
   Future<void> _handlePreview(BuildContext context) async {
-    BaseNavigator.push<String>(context, PreviewProfileView(profile: profile));
+    BaseNavigator.push<String>(
+      context,
+      PreviewProfileView(profile: profile, title: displayTitle),
+    );
   }
 
   Future updateProfile() async {
@@ -258,7 +276,7 @@ class ProfileItem extends StatelessWidget {
     final res = await globalState.safeRun<bool>(() async {
       final mFile = await profile.file;
       final value = await picker.saveFile(
-        profile.realLabel,
+        displayTitle,
         mFile.readAsBytesSync(),
       );
       if (value == null) return false;
@@ -402,7 +420,7 @@ class ProfileItem extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               Text(
-                profile.realLabel,
+                displayTitle,
                 style: context.textTheme.titleMedium,
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
@@ -439,18 +457,11 @@ class LastUpdateTimeText extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    if (lastUpdateDate == null) {
+    final displayTimestamp = getProfileDisplayTimestamp(lastUpdateDate);
+    if (displayTimestamp.isEmpty) {
       return Text('', style: style);
     }
-    return TickBuilder(
-      duration: const Duration(minutes: 1),
-      builder: (context, _) {
-        return Text(
-          lastUpdateDate!.getLastUpdateTimeDesc(context),
-          style: style,
-        );
-      },
-    );
+    return Text(displayTimestamp, style: style);
   }
 }
 
@@ -476,6 +487,7 @@ class _ReorderableProfilesSheetState extends State<ReorderableProfilesSheet> {
   Widget _buildItem(int index) {
     final position = ItemPosition.get(index, profiles.length);
     final profile = profiles[index];
+    final displayTimestamp = getProfileDisplayTimestamp(profile.lastUpdateDate);
     return ItemPositionProvider(
       key: Key(profile.id.toString()),
       position: position,
@@ -484,7 +496,8 @@ class _ReorderableProfilesSheetState extends State<ReorderableProfilesSheet> {
           index: index,
           child: const Icon(Icons.drag_handle),
         ),
-        title: Text(profile.realLabel),
+        title: Text(getProfileDisplayTitle(index)),
+        subtitle: displayTimestamp.isEmpty ? null : Text(displayTimestamp),
       ),
     );
   }
